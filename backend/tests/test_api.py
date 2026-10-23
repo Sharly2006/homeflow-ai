@@ -113,3 +113,44 @@ def test_api_mcp_tools_endpoint():
     data = response.json()
     assert data["tools_count"] == 10
     assert any(t["name"] == "create_task" for t in data["tools"])
+
+
+def test_cors_preflight_for_vercel_production_origin():
+    origin = "https://homeflow-ai-ochre.vercel.app"
+    response = client.options(
+        "/api/health",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == origin
+    assert "GET" in response.headers.get("access-control-allow-methods", "")
+
+
+def test_cors_request_for_vercel_assistant_endpoint():
+    origin = "https://homeflow-ai-ochre.vercel.app"
+    response = client.post(
+        "/api/assistant",
+        json={"query": "Show me all pending household tasks."},
+        headers={"Origin": origin},
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == origin
+
+
+def test_cors_preflight_for_localhost():
+    origin = "http://localhost:5173"
+    response = client.options(
+        "/api/tasks",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == origin
+

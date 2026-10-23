@@ -3,7 +3,16 @@
  * Uses Fetch API to communicate with FastAPI backend.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+// Backend API Base URL resolution:
+// 1. Reads import.meta.env.VITE_API_URL if configured (in Vercel or local .env)
+// 2. In production builds, falls back to the live Render backend
+// 3. In local development without VITE_API_URL, uses empty string '' to leverage the Vite proxy
+const rawBase =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://homeflow-ai-qgtl.onrender.com' : '');
+
+// Clean trailing slashes to avoid '//api/endpoint' 404 routing errors
+const BASE_URL = rawBase ? rawBase.replace(/\/+$/, '') : '';
 
 async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;

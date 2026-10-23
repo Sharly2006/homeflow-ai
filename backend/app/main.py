@@ -35,15 +35,28 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration for local React / Vite development server
+# CORS configuration: supports local development, Vercel deployments, and custom domains
+default_origins = [
+    "https://homeflow-ai-ochre.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# Read optional origins from environment (comma-separated or single URL)
+env_origins = os.getenv("ALLOWED_ORIGINS") or os.getenv("FRONTEND_URL") or os.getenv("CORS_ORIGINS")
+allowed_origins = list(default_origins)
+if env_origins:
+    for origin in env_origins.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned and cleaned not in allowed_origins:
+            allowed_origins.append(cleaned)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
